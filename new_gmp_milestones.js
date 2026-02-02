@@ -1,20 +1,13 @@
-//newCHR_Milestones.v.3.0.js
 /**
- * newCHR_Milestones Library
- * Version: 2.1
- * Description: Render milestones by month with required milestone fields.
- * Adds ONE optional additional note per month.
- * License: MIT
- *
+ * newCHR_Milestones
+ * Version: 3.1
  * Author: Ahmed Shareef
- * Mobile: +960 7412365
- * GitHub: @AhmedSharyph
- * Website: https://www.ahmedsharyph.mv
+ * License: MIT
  */
 
 const newCHR_Milestones = (() => {
 
-  // --- Milestones Data ---
+  /* ================= DATA ================= */
   const milestonesData = [
   // ================== 2 Months ==================
   { month: 2, category: "MILESTONE I - Social/Emotional Milestones", label: "Calms down when spoken to or picked up", name: "calms_down" },
@@ -198,115 +191,97 @@ const newCHR_Milestones = (() => {
 { month: 60, category: "MILESTONE III - Cognitive Milestones (Learning, Thinking, Problem-Solving)", label: "Names some letters when you point to them", name: "names_letters" },
 { month: 60, category: "MILESTONE IV - Movement/Physical Development Milestones", label: "Buttons some buttons", name: "buttons" },
 { month: 60, category: "MILESTONE IV - Movement/Physical Development Milestones", label: "Hops on one foot", name: "hops_one_foot" },
-];
-
-
   ];
 
-  // --- Category color mapping ---
-  const categoryColors = {
-    "MILESTONE I - Social/Emotional Milestones": "bg-blue-100 border-blue-400",
-    "MILESTONE II - Language/Communication Milestones": "bg-green-100 border-green-400",
-    "MILESTONE III - Cognitive Milestones (learning, thinking, problem-solving)": "bg-yellow-100 border-yellow-400",
-    "MILESTONE IV - Movement/Physical Development Milestones": "bg-pink-100 border-pink-400"
+  /* ============ CATEGORY STYLES ============ */
+  const categoryStyles = {
+    "Social/Emotional": "bg-blue-50 border-blue-300",
+    "Language/Communication": "bg-green-50 border-green-300",
+    "Cognitive": "bg-yellow-50 border-yellow-300",
+    "Movement/Physical": "bg-pink-50 border-pink-300"
   };
 
-  // --- Get milestones by month ---
-  const getByMonth = (month) => milestonesData.filter(m => m.month === month);
+  /* ============ AGE CALCULATION ============ */
+  function calculateAgeInMonths(dob, visitDate) {
+    const birth = new Date(dob);
+    const visit = new Date(visitDate);
 
-  // --- Create Yes/No select (required) ---
-  function createSelect(name) {
-    const select = document.createElement("select");
-    select.id = name;
-    select.name = name;
-    select.required = true; // REQUIRED
-    select.className = "border border-gray-300 rounded px-2 py-1 w-full";
+    let months =
+      (visit.getFullYear() - birth.getFullYear()) * 12 +
+      (visit.getMonth() - birth.getMonth());
 
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.textContent = "Select";
-    select.appendChild(defaultOption);
-
-    ["Yes", "No"].forEach(val => {
-      const opt = document.createElement("option");
-      opt.value = val;
-      opt.textContent = val;
-      select.appendChild(opt);
-    });
-
-    return select;
+    if (visit.getDate() < birth.getDate()) months--;
+    return months;
   }
 
-  // --- Render milestones form ---
-  function renderForm(month, containerId) {
+  /* ============ GET MILESTONES ============ */
+  function getByAge(months) {
+    return milestonesData.filter(m => m.month === months);
+  }
+
+  /* ============ YES / NO SELECT ============ */
+  function yesNoSelect(name) {
+    return `
+      <select name="${name}" class="w-32 border rounded px-2 py-1" required>
+        <option value="">Select</option>
+        <option>Yes</option>
+        <option>No</option>
+      </select>
+    `;
+  }
+
+  /* ============ RENDER ============ */
+  function renderFromDates(dob, visitDate, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     container.innerHTML = "";
 
-    const milestones = getByMonth(month);
+    const ageMonths = calculateAgeInMonths(dob, visitDate);
+    const milestones = getByAge(ageMonths);
+
     if (!milestones.length) {
-      container.innerHTML = `<p class="text-gray-500">No milestones available for ${month} month(s)</p>`;
+      container.innerHTML = `
+        <p class="text-gray-500 italic">
+          No milestones for ${ageMonths} months
+        </p>`;
       return;
     }
 
-    const categories = [...new Set(milestones.map(m => m.category))];
-
-    categories.forEach(category => {
-      const catBox = document.createElement("div");
-      catBox.className = "mb-6 p-3 rounded shadow bg-white";
-
-      const title = document.createElement("h3");
-      title.className = "font-semibold text-lg mb-3";
-      title.textContent = category;
-      catBox.appendChild(title);
-
-      const filtered = milestones.filter(m => m.category === category);
-      const colorClass = categoryColors[category] || "bg-gray-100 border-gray-300";
-
-      filtered.forEach((m, index) => {
-        const row = document.createElement("div");
-        row.className = `mb-2 p-2 rounded border ${colorClass} ${index % 2 ? "opacity-80" : "opacity-95"}`;
-
-        const label = document.createElement("label");
-        label.className = "block mb-1 font-medium";
-        label.htmlFor = m.name;
-        label.textContent = m.label;
-
-        const select = createSelect(m.name);
-
-        row.appendChild(label);
-        row.appendChild(select);
-        catBox.appendChild(row);
-      });
-
-      container.appendChild(catBox);
+    const grouped = {};
+    milestones.forEach(m => {
+      grouped[m.category] = grouped[m.category] || [];
+      grouped[m.category].push(m);
     });
 
-    // --- ONE OPTIONAL ADDITIONAL NOTE FIELD FOR THE MONTH ---
-    const noteWrapper = document.createElement("div");
-    noteWrapper.className = "mt-6 bg-white p-4 rounded shadow";
+    Object.keys(grouped).forEach(category => {
+      const box = document.createElement("div");
+      box.className = "mb-6";
 
-    const noteLabel = document.createElement("label");
-    noteLabel.className = "block mb-1 font-semibold";
-    noteLabel.textContent = `Additional Notes for Month ${month} (Optional)`;
+      box.innerHTML = `
+        <h3 class="font-bold mb-2">${category}</h3>
+        ${grouped[category].map(m => `
+          <div class="flex items-center justify-between p-3 mb-2 border rounded ${categoryStyles[category]}">
+            <span class="text-sm">${m.label}</span>
+            ${yesNoSelect(m.name)}
+          </div>
+        `).join("")}
+      `;
 
-    const noteInput = document.createElement("textarea");
-    noteInput.className = "w-full border border-gray-300 rounded p-2";
-    noteInput.rows = 3;
-    noteInput.name = `${month}_additional_note`;
-    noteInput.required = false; // optional
+      container.appendChild(box);
+    });
 
-    noteWrapper.appendChild(noteLabel);
-    noteWrapper.appendChild(noteInput);
-
-    container.appendChild(noteWrapper);
+    container.insertAdjacentHTML("beforeend", `
+      <div class="mt-6">
+        <label class="font-semibold block mb-1">Additional Notes (Optional)</label>
+        <textarea class="w-full border rounded p-2" rows="3"></textarea>
+      </div>
+    `);
   }
 
   return {
-    getByMonth,
-    createSelect,
-    renderForm
+    calculateAgeInMonths,
+    renderFromDates
   };
 
 })();
