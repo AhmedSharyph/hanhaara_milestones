@@ -1,8 +1,7 @@
 /**
- * Milestones
- * Version: 1.1
+ * GMP Milestones – Exact Month Mode
+ * Version: 1.3
  * Author: Ahmed Shareef
- * License: MIT
  */
 
 const newCHR_Milestones = (() => {
@@ -193,12 +192,12 @@ const newCHR_Milestones = (() => {
 { month: 60, category: "MILESTONE IV - Movement/Physical Development Milestones", label: "Hops on one foot", name: "hops_one_foot" },
   ];
 
-  /* ============ CATEGORY STYLES ============ */
+/* ============ CATEGORY STYLES ============ */
   const categoryStyles = {
-    "Social/Emotional": "bg-blue-50 border-blue-300",
-    "Language/Communication": "bg-green-50 border-green-300",
-    "Cognitive": "bg-yellow-50 border-yellow-300",
-    "Movement/Physical": "bg-pink-50 border-pink-300"
+    "MILESTONE I - Social/Emotional Milestones": "bg-blue-50 border-blue-300",
+    "MILESTONE II - Language/Communication Milestones": "bg-green-50 border-green-300",
+    "MILESTONE III - Cognitive Milestones (Learning, Thinking, Problem-Solving)": "bg-yellow-50 border-yellow-300",
+    "MILESTONE IV - Movement/Physical Development Milestones": "bg-pink-50 border-pink-300"
   };
 
   /* ============ AGE CALCULATION ============ */
@@ -214,23 +213,19 @@ const newCHR_Milestones = (() => {
     return months;
   }
 
-  /* ============ GET MILESTONES ============ */
-  function getByAge(months) {
-    return milestonesData.filter(m => m.month === months);
-  }
-
   /* ============ YES / NO SELECT ============ */
   function yesNoSelect(name) {
     return `
-      <select name="${name}" class="w-32 border rounded px-2 py-1" required>
-        <option value="">Select</option>
-        <option>Yes</option>
-        <option>No</option>
+      <select name="${name}" required
+        class="w-32 border border-slate-300 rounded-lg px-2 py-1">
+        <option value="" disabled selected>Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
       </select>
     `;
   }
 
-  /* ============ RENDER ============ */
+  /* ============ RENDER (EXACT MONTH) ============ */
   function renderFromDates(dob, visitDate, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -238,43 +233,41 @@ const newCHR_Milestones = (() => {
     container.innerHTML = "";
 
     const ageMonths = calculateAgeInMonths(dob, visitDate);
-    const milestones = getByAge(ageMonths);
+
+    // 🔴 EXACT MATCH ONLY
+    const milestones = milestonesData.filter(m => m.month === ageMonths);
 
     if (!milestones.length) {
       container.innerHTML = `
-        <p class="text-gray-500 italic">
-          No milestones for ${ageMonths} months
+        <p class="text-sm text-slate-500 italic">
+          No milestones defined for <strong>${ageMonths} months</strong>.
         </p>`;
       return;
     }
 
-    const grouped = {};
+    container.insertAdjacentHTML("beforeend", `
+      <p class="text-sm text-slate-600 mb-4">
+        Showing milestones for <strong>${ageMonths} months</strong>
+      </p>
+    `);
+
     milestones.forEach(m => {
-      grouped[m.category] = grouped[m.category] || [];
-      grouped[m.category].push(m);
-    });
+      const style = categoryStyles[m.category] || "bg-gray-50 border-gray-300";
 
-    Object.keys(grouped).forEach(category => {
-      const box = document.createElement("div");
-      box.className = "mb-6";
-
-      box.innerHTML = `
-        <h3 class="font-bold mb-2">${category}</h3>
-        ${grouped[category].map(m => `
-          <div class="flex items-center justify-between p-3 mb-2 border rounded ${categoryStyles[category]}">
-            <span class="text-sm">${m.label}</span>
-            ${yesNoSelect(m.name)}
-          </div>
-        `).join("")}
-      `;
-
-      container.appendChild(box);
+      container.insertAdjacentHTML("beforeend", `
+        <div class="flex items-center justify-between p-3 mb-2 border rounded-xl ${style}">
+          <span class="text-sm">${m.label}</span>
+          ${yesNoSelect(m.name)}
+        </div>
+      `);
     });
 
     container.insertAdjacentHTML("beforeend", `
       <div class="mt-6">
-        <label class="font-semibold block mb-1">Additional Notes (Optional)</label>
-        <textarea class="w-full border rounded p-2" rows="3"></textarea>
+        <label class="text-xs font-bold uppercase text-slate-500 block mb-1">
+          Notes (Optional)
+        </label>
+        <textarea class="w-full border rounded-xl p-3" rows="3"></textarea>
       </div>
     `);
   }
