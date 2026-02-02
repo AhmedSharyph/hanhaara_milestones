@@ -1,6 +1,6 @@
 /**
- * newCHR_Milestones
- * Version: 3.1
+ * Milestones
+ * Version: 1.1
  * Author: Ahmed Shareef
  * License: MIT
  */
